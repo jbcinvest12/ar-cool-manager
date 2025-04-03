@@ -3,8 +3,9 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
-// Tipos
+// Types
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -20,7 +21,7 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-// Criação do contexto
+// Context creation
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Provider
@@ -29,10 +30,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
-  // Efeito para carregar o usuário atual e se inscrever em mudanças de autenticação
+  // Effect to load current user and subscribe to authentication changes
   useEffect(() => {
-    // Verifica se há um usuário autenticado
+    // Check if there's an authenticated user
     const getUser = async () => {
       setIsLoading(true);
       try {
@@ -43,9 +45,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else if (data?.user) {
           setUser(data.user);
           
-          // Note: We'll add proper admin role check once the database tables are set up
-          // For now, we'll set isAdmin to false for all users
+          // Check if user is admin
+          // For now, set to false until we implement the proper user_roles table
           setIsAdmin(false);
+          
+          // Later we'll implement proper admin role check like this:
+          // const { data: roleData } = await supabase
+          //   .from('user_roles')
+          //   .select('*')
+          //   .eq('user_id', data.user.id)
+          //   .eq('role', 'admin')
+          //   .single();
+          // setIsAdmin(!!roleData);
         }
       } catch (error) {
         console.error("Erro ao verificar autenticação:", error);
@@ -56,13 +67,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     getUser();
 
-    // Inscrever-se em mudanças de autenticação
+    // Subscribe to authentication changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setUser(session.user);
         
-        // Note: We'll add proper admin role check once the database tables are set up
-        // For now, we'll set isAdmin to false for all users
+        // For now, set isAdmin to false until we implement the proper role check
         setIsAdmin(false);
       } else {
         setUser(null);
@@ -71,13 +81,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(false);
     });
 
-    // Limpeza ao desmontar
+    // Cleanup on unmount
     return () => {
       authListener?.subscription.unsubscribe();
     };
   }, []);
 
-  // Função para login
+  // Login function
   const signIn = async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -91,7 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error: any) {
       console.error("Erro no login:", error.message);
       toast({
-        title: "Erro no login",
+        title: t('auth.login_error'),
         description: error.message,
         variant: "destructive",
       });
@@ -99,7 +109,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Função para cadastro
+  // Registration function
   const signUp = async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signUp({
@@ -112,13 +122,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       toast({
-        title: "Registro bem-sucedido",
-        description: "Verifique seu e-mail para confirmar o cadastro.",
+        title: t('auth.signup_success'),
+        description: t('auth.check_email'),
       });
     } catch (error: any) {
       console.error("Erro no cadastro:", error.message);
       toast({
-        title: "Erro no cadastro",
+        title: t('auth.signup_error'),
         description: error.message,
         variant: "destructive",
       });
@@ -126,7 +136,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Função para logout
+  // Logout function
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -136,14 +146,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error: any) {
       console.error("Erro ao sair:", error.message);
       toast({
-        title: "Erro ao sair",
+        title: t('auth.logout_error'),
         description: error.message,
         variant: "destructive",
       });
     }
   };
 
-  // Função para redefinir senha
+  // Password reset function
   const resetPassword = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -155,13 +165,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       toast({
-        title: "Redefinição de senha",
-        description: "Verifique seu e-mail para instruções de redefinição de senha.",
+        title: t('auth.reset_password'),
+        description: t('auth.check_email_reset'),
       });
     } catch (error: any) {
       console.error("Erro ao redefinir senha:", error.message);
       toast({
-        title: "Erro ao redefinir senha",
+        title: t('auth.reset_error'),
         description: error.message,
         variant: "destructive",
       });
@@ -187,7 +197,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// Hook personalizado para usar o contexto
+// Custom hook to use the context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
