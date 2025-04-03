@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Bell, Menu, User, Search, Languages } from "lucide-react";
+import { Bell, Menu, Search, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/contexts/AuthContext";
+import ProfileUserMenu from "./ProfileUserMenu";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -23,7 +23,6 @@ interface HeaderProps {
 
 export default function Header({ toggleSidebar, title }: HeaderProps) {
   const { t, i18n } = useTranslation();
-  const { user, signOut } = useAuth();
   const isMobile = useIsMobile();
   const [searchValue, setSearchValue] = useState("");
 
@@ -81,42 +80,7 @@ export default function Header({ toggleSidebar, title }: HeaderProps) {
             <Bell className="h-5 w-5" />
           </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <User className={cn("h-5 w-5", user ? "text-primary" : "")} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {user ? (
-                <>
-                  <DropdownMenuLabel>
-                    {user.email}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => window.location.href = "/profile"}>
-                    {t('app.profile')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => window.location.href = "/settings"}>
-                    {t('app.settings')}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => signOut()}>
-                    {t('app.logout')}
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <>
-                  <DropdownMenuItem onClick={() => window.location.href = "/login"}>
-                    {t('auth.login')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => window.location.href = "/signup"}>
-                    {t('auth.signup')}
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ProfileUserMenu />
         </div>
       </div>
     </header>
