@@ -3,17 +3,13 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Get the Supabase URL and anon key from environment variables
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Hardcoded fallback values for development (not recommended for production)
+// Hardcoded values for development (not recommended for production)
 const fallbackUrl = 'https://oywqdbajezhdabkuueqt.supabase.co';
 const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d3FkYmFqZXpoZGFia3V1ZXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2MzcxMTQsImV4cCI6MjA1OTIxMzExNH0.7v2BCn6KadTOWV2exXGR14DTQEFMsPGT594YxJ6S16Q';
 
-// Use environment variables or fallback to hardcoded values if not available
-const url = SUPABASE_URL || fallbackUrl;
-const key = SUPABASE_ANON_KEY || fallbackKey;
+// Use environment variables if available, otherwise fallback to hardcoded values
+const url = import.meta.env.VITE_SUPABASE_URL || fallbackUrl;
+const key = import.meta.env.VITE_SUPABASE_ANON_KEY || fallbackKey;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
