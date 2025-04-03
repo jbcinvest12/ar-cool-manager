@@ -3,10 +3,19 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://oywqdbajezhdabkuueqt.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95d3FkYmFqZXpoZGFia3V1ZXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2MzcxMTQsImV4cCI6MjA1OTIxMzExNH0.7v2BCn6KadTOWV2exXGR14DTQEFMsPGT594YxJ6S16Q";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL) throw new Error('VITE_SUPABASE_URL is required');
+if (!SUPABASE_ANON_KEY) throw new Error('VITE_SUPABASE_ANON_KEY is required');
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storageKey: 'ar-cool-manager-auth',
+  }
+});

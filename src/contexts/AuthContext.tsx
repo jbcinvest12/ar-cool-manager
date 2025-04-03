@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 // Types
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isAdmin: boolean;
@@ -27,6 +28,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Provider
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const { toast } = useToast();
@@ -34,56 +36,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Effect to load current user and subscribe to authentication changes
   useEffect(() => {
-    // Check if there's an authenticated user
-    const getUser = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase.auth.getUser();
-        if (error) {
-          console.error("Erro ao obter usuário:", error);
-          setUser(null);
-        } else if (data?.user) {
-          setUser(data.user);
-          
-          // Check if user is admin
-          // For now, set to false until we implement the proper user_roles table
-          setIsAdmin(false);
-          
-          // Later we'll implement proper admin role check like this:
-          // const { data: roleData } = await supabase
-          //   .from('user_roles')
-          //   .select('*')
-          //   .eq('user_id', data.user.id)
-          //   .eq('role', 'admin')
-          //   .single();
-          // setIsAdmin(!!roleData);
-        }
-      } catch (error) {
-        console.error("Erro ao verificar autenticação:", error);
-      } finally {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        
+        // Note: For now, set isAdmin to false until we implement the proper role check
+        setIsAdmin(false);
+        
         setIsLoading(false);
       }
-    };
+    );
 
-    getUser();
-
-    // Subscribe to authentication changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        
-        // For now, set isAdmin to false until we implement the proper role check
-        setIsAdmin(false);
-      } else {
-        setUser(null);
-        setIsAdmin(false);
-      }
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
       setIsLoading(false);
+
+      // If there's a session, check if user is admin
+      // This is commented out until we create the user_roles table
+      /*
+      if (currentSession?.user) {
+        supabase
+          .from('user_roles')
+          .select('*')
+          .eq('user_id', currentSession.user.id)
+          .eq('role', 'admin')
+          .single()
+          .then(({ data }) => {
+            setIsAdmin(!!data);
+          });
+      }
+      */
     });
 
     // Cleanup on unmount
     return () => {
-      authListener?.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -183,6 +174,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
+        session,
         isAuthenticated: !!user,
         isLoading,
         isAdmin,
