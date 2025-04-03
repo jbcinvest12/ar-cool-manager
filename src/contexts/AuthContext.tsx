@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { createClient, User } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 // Tipos
 interface AuthContextType {
@@ -18,11 +19,6 @@ interface AuthContextType {
 interface AuthProviderProps {
   children: React.ReactNode;
 }
-
-// Inicialização do cliente Supabase
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Criação do contexto
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
