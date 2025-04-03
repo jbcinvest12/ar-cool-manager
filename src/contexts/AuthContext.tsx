@@ -43,14 +43,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else if (data?.user) {
           setUser(data.user);
           
-          // Verifica se o usuário é administrador
-          const { data: roleData } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', data.user.id)
-            .single();
-            
-          setIsAdmin(roleData?.role === 'admin');
+          // Note: We'll add proper admin role check once the database tables are set up
+          // For now, we'll set isAdmin to false for all users
+          setIsAdmin(false);
         }
       } catch (error) {
         console.error("Erro ao verificar autenticação:", error);
@@ -66,14 +61,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (session?.user) {
         setUser(session.user);
         
-        // Verifica se o usuário é administrador
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .single();
-          
-        setIsAdmin(roleData?.role === 'admin');
+        // Note: We'll add proper admin role check once the database tables are set up
+        // For now, we'll set isAdmin to false for all users
+        setIsAdmin(false);
       } else {
         setUser(null);
         setIsAdmin(false);
